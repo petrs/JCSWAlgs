@@ -108,6 +108,7 @@ public class RSAOAEP extends Cipher {
         newInst.tempHash = JCSystem.makeTransientByteArray(hash.getLength(), JCSystem.CLEAR_ON_RESET);
         newInst.defHash = JCSystem.makeTransientByteArray(hash.getLength(), JCSystem.CLEAR_ON_RESET);
         newInst.C = JCSystem.makeTransientByteArray((byte) 4, JCSystem.CLEAR_ON_RESET);
+
         if (externalMaskSourceArray == null) {
             newInst.maskSource = JCSystem.makeTransientByteArray(MAX_MASK_ARRAY_LENGTH, JCSystem.CLEAR_ON_RESET);
         }
@@ -118,10 +119,11 @@ public class RSAOAEP extends Cipher {
             }
             newInst.maskSource = externalMaskSourceArray;
         }
+
         if (encodingParams != null) {
             hash.doFinal(encodingParams, (short) 0, (short) encodingParams.length, newInst.defHash, (short) 0);
         } else {
-            hash.doFinal(encodingParams, (short) 0, (short) 0, newInst.defHash, (short) 0);
+            hash.doFinal(newInst.tempHash, (short) 0, (short) 0, newInst.defHash, (short) 0);
         }
 
         return newInst;

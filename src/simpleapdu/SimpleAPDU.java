@@ -20,6 +20,8 @@ public class SimpleAPDU {
         (byte) 0x41, (byte) 0x70, (byte) 0x70, (byte) 0x6C, (byte) 0x65, (byte) 0x74};
 
     private static byte TEST_RSAOEAP[] = {(byte) 0xB0, (byte) 0x5A, (byte) 0x00, (byte) 0x00, (byte) 0x00};
+    private static byte TEST_RSAOEAP_PERF_ENCODE[] = {(byte) 0xB0, (byte) 0x5B, (byte) 0x01, (byte) 0x00, (byte) 0x02, (byte) 0x00, (byte) 0x10};
+    private static byte TEST_RSAOEAP_PERF_DECODE[] = {(byte) 0xB0, (byte) 0x5C, (byte) 0x02, (byte) 0x00, (byte) 0x02, (byte) 0x00, (byte) 0xff};
     
     static short getShort(byte[] array, int offset) {
         return (short) (((array[offset] & 0xFF) << 8) | (array[offset + 1] & 0xFF));        
@@ -45,7 +47,17 @@ public class SimpleAPDU {
             if (cardManager.ConnectToCard()) {
                 // Select our application on card
                 cardManager.sendAPDU(SELECT_TESTAPPLET);
+
+                // Functionla tests
                 ResponseAPDU resp = cardManager.sendAPDU(TEST_RSAOEAP);
+                
+                // Performance tests
+                for (int i = 0; i < 5; i++) {
+                    resp = cardManager.sendAPDU(TEST_RSAOEAP_PERF_ENCODE);
+                }
+                for (int i = 0; i < 5; i++) {
+                    resp = cardManager.sendAPDU(TEST_RSAOEAP_PERF_DECODE);
+                }
 
                 cardManager.DisconnectFromCard();
             } else {
