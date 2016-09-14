@@ -46,8 +46,9 @@ import java.util.Random;
 
 public class RSAOAEP extends Cipher {
     public static final short OAEP_DECODE_FAIL = (short) 0x6003;
+    public static final short ORACLE_PADDING_ATTACK_POSSIBLE = (short) 0x6004;
     
-    private final static boolean RSA_NOPAD_USED = false;
+    private static boolean RSA_NOPAD_USED = false;
     private final static short MAX_MASK_ARRAY_LENGTH = (short) 260; // 220 is maximum value required if RSA2048bits OAEP is used
     
     Cipher              rsaEngine;      // underlaying RSA engine
@@ -86,21 +87,49 @@ public class RSAOAEP extends Cipher {
         }
         short keySize = rsaKey.getSize();
         blockLength = (short) (keySize / 8);    // length of underlaying RSA
-        blockLength -= 11;                      // overhead for PKCS1 padding
+        if (RSA_NOPAD_USED == false) {
+            blockLength -= 11;                      // overhead for PKCS1 padding
+        }
         
         maxInputLength = blockLength;           // length of underlaying RSA
         maxInputLength -= hash.getLength();     // hash of encoding parameters
         maxInputLength -= hash.getLength();     // seed
         maxInputLength -= 1;                    // 1B sentinel
     }
+    
     public static RSAOAEP getInstance(
             Cipher rsaEngine,
             MessageDigest hash,
             RandomData random,
             byte[] encodingParams,
             byte[] externalMaskSourceArray) {
+        return getInstance(rsaEngine, false, hash, random, encodingParams, externalMaskSourceArray);
+    }    
+    public static RSAOAEP getInstanceAnyEngine(
+            Cipher rsaEngine,
+            MessageDigest hash,
+            RandomData random,
+            byte[] encodingParams,
+            byte[] externalMaskSourceArray) {
+        return getInstance(rsaEngine, false, hash, random, encodingParams, externalMaskSourceArray);
+    }
+    public static RSAOAEP getInstance(
+            Cipher rsaEngine,
+            boolean bPreventPaddingOracle,
+            MessageDigest hash,
+            RandomData random,
+            byte[] encodingParams,
+            byte[] externalMaskSourceArray) {
 
         RSAOAEP newInst = new RSAOAEP();
+        
+        // Chcek for engine with potential padding oracle attack
+        RSA_NOPAD_USED = (rsaEngine.getAlgorithm() != Cipher.ALG_RSA_NOPAD) ? false : true;
+        
+        if ((RSA_NOPAD_USED == false) && bPreventPaddingOracle) {
+            ISOException.throwIt(ORACLE_PADDING_ATTACK_POSSIBLE);
+        }
+        
         newInst.rsaEngine = rsaEngine;
         newInst.hash = hash;
         newInst.random = random;
@@ -270,11 +299,14 @@ public class RSAOAEP extends Cipher {
         start -= outOff;
 
         if (RSA_NOPAD_USED) {
-            for (short i = outOff; i < (short) (outOff + outputLength); i++)
+            for (short i = outOff; i < (short) (outOff + outputLength); i++) {
                 out[(short) (i - 1)] = out[(short) (start + i)];
+            }
             outputLength--;
         } else {
-            for (short i = outOff; i < (short) (outOff + outputLength); i++) out[i] = out[(short) (start + i)];
+            for (short i = outOff; i < (short) (outOff + outputLength); i++) {
+                out[i] = out[(short) (start + i)];
+            }
         }
 
         return outputLength;

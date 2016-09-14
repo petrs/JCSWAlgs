@@ -154,7 +154,7 @@ public class TestSWAlgsApplet extends javacard.framework.Applet
             m_wrapLen = m_rsaOAEP.doFinal(m_ramArray, (short) 0, dataLen, m_ramArray2, (short) 0);
         }
         if (buffer[ISO7816.OFFSET_P1] == 2) {
-            // Assumption: properly wrapped data in m_ramArray2 from previous run of Test_RSAOEAP_encode
+            // Assumption: properly wrapped data in m_ramArray2 from previous run of Test_RSAOEAP_performance encode
             m_rsaOAEP.init(m_rsaPrivKey, Cipher.MODE_DECRYPT);
             short unwrapLen = m_rsaOAEP.doFinal(m_ramArray2, (short) 0, m_wrapLen, m_ramArray, (short) 0);
         }
