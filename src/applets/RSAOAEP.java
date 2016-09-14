@@ -123,6 +123,12 @@ public class RSAOAEP extends Cipher {
 
         RSAOAEP newInst = new RSAOAEP();
         
+        // For now, prevent other engines than PKCS1
+        if (rsaEngine.getAlgorithm() != Cipher.ALG_RSA_PKCS1) {
+            ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+        }
+        
+        
         // Chcek for engine with potential padding oracle attack
         RSA_NOPAD_USED = (rsaEngine.getAlgorithm() != Cipher.ALG_RSA_NOPAD) ? false : true;
         
